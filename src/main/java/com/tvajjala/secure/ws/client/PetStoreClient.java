@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -66,10 +67,11 @@ public class PetStoreClient {
     public Order placeOrder(Order order) {
 
         try {
-            ResponseEntity<Order> responseEntity = trustedRestTemplate.postForEntity(baseUrl + "/store/order", order, Order.class);
-            return responseEntity.getBody();
+            return trustedRestTemplate.postForEntity(baseUrl + "/store/order", order, Order.class).getBody();
         } catch (HttpClientErrorException e) {
-            throw new BadRequestException(e);
+            if (e.getRawStatusCode() == HttpStatus.BAD_REQUEST.value())
+                throw new BadRequestException(e);//streamline better way as per your business needs
+            throw e;
         }
 
     }

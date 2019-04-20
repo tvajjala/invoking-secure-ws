@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.util.TimeZone;
@@ -17,6 +19,7 @@ import java.util.TimeZone;
 /**
  * @author ThirupathiReddy Vajjala
  */
+@RestController
 @SpringBootApplication
 public class Application implements CommandLineRunner {
 
@@ -39,14 +42,18 @@ public class Application implements CommandLineRunner {
         Pet pet = petStoreClient.getPetById(22);
         LOG.info("Received response {} ", pet);
 
+    }
+
+
+    @GetMapping("/order")
+    public Order getOrder() {
         Order order = new Order();
         order.setShipDate(Instant.now());
         order.setPetId(22);
-
         order = petStoreClient.placeOrder(order);
 
         LOG.info("Order status {} ", order);
+        return order;
     }
-
 
 }

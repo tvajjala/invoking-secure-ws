@@ -13,6 +13,7 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -29,6 +30,7 @@ import static java.util.Collections.singletonList;
  * @author ThirupathiReddy Vajjala
  */
 @Configuration
+@Import(WebConfig.class)
 public class RestTemplateConfig {
 
 
@@ -42,7 +44,7 @@ public class RestTemplateConfig {
     public RestTemplate restTemplate() throws Exception {
         RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient()));
         registerMessageConverters(restTemplate);
-
+        restTemplate.setInterceptors(singletonList(new RestTemplateInterceptor()));
         return restTemplate;
     }
 
@@ -58,7 +60,7 @@ public class RestTemplateConfig {
 
         RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory(trustedHttpClient()));
         registerMessageConverters(restTemplate);
-
+        restTemplate.setInterceptors(singletonList(new RestTemplateInterceptor()));
         return restTemplate;
     }
 
@@ -66,7 +68,6 @@ public class RestTemplateConfig {
     private void registerMessageConverters(RestTemplate restTemplate) {
         restTemplate.getMessageConverters().removeIf(m -> m.getClass().getName().equals(MappingJackson2HttpMessageConverter.class.getName()));
         restTemplate.getMessageConverters().add(mappingJacksonHttpMessageConverter());
-        restTemplate.setInterceptors(singletonList(new RestTemplateInterceptor()));
     }
 
 
@@ -113,12 +114,12 @@ public class RestTemplateConfig {
     }
 
 
+    @Bean
     public MappingJackson2HttpMessageConverter mappingJacksonHttpMessageConverter() {
         final MappingJackson2HttpMessageConverter jaksonMessageConverter = new MappingJackson2HttpMessageConverter();
         jaksonMessageConverter.setObjectMapper(objectMapper());
         return jaksonMessageConverter;
     }
-
 
     @Bean
     public ObjectMapper objectMapper() {
@@ -133,7 +134,7 @@ public class RestTemplateConfig {
         objectMapper.findAndRegisterModules();
 
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.enable(SerializationFeature.WRITE_DATES_WITH_ZONE_ID);
+        //objectMapper.enable(SerializationFeature.WRITE_DATES_WITH_ZONE_ID);
 
         //pretty printing
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);

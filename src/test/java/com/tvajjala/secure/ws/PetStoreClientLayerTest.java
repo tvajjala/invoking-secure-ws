@@ -28,13 +28,13 @@ public class PetStoreClientLayerTest {
 
     static MockRestServiceServer mockServer;
 
-    @BeforeClass
+    @BeforeClass// helps you to create server once for all tests
     public static void setup() {
         RestTemplate restTemplate = new RestTemplate();
         RestGatewaySupport restGatewaySupport = new RestGatewaySupport();
         restGatewaySupport.setRestTemplate(restTemplate);
         mockServer = MockRestServiceServer.createServer(restGatewaySupport);
-        petStoreClient = new PetStoreClient(restTemplate, "petstore.com");
+        petStoreClient = new PetStoreClient(restTemplate, "http://fake.petstore.com");
 
     }
 
