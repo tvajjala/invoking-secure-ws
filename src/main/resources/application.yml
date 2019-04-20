@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    active:
+    - default
+  application:
+    name: tvajjala.in
+  output:
+    ansi:
+      enabled: always
+logging:
+  level:
+    # Enabling trace for app specific logging.
+    org.springframework: INFO
