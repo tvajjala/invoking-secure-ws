@@ -1,5 +1,9 @@
 package com.tvajjala.secure.ws.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -11,10 +15,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.SSLContext;
 import java.security.cert.X509Certificate;
+
+import static java.util.Collections.singletonList;
 
 /**
  * Customized RestTemplate configuration to invoke secured webServices
@@ -33,8 +40,10 @@ public class RestTemplateConfig {
      */
     @Bean
     public RestTemplate restTemplate() throws Exception {
+        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient()));
+        registerMessageConverters(restTemplate);
 
-        return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient()));
+        return restTemplate;
     }
 
 
@@ -46,7 +55,18 @@ public class RestTemplateConfig {
      */
     @Bean
     RestTemplate trustedRestTemplate() throws Exception {
-        return new RestTemplate(new HttpComponentsClientHttpRequestFactory(trustedHttpClient()));
+
+        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory(trustedHttpClient()));
+        registerMessageConverters(restTemplate);
+
+        return restTemplate;
+    }
+
+
+    private void registerMessageConverters(RestTemplate restTemplate) {
+        restTemplate.getMessageConverters().removeIf(m -> m.getClass().getName().equals(MappingJackson2HttpMessageConverter.class.getName()));
+        restTemplate.getMessageConverters().add(mappingJacksonHttpMessageConverter());
+        restTemplate.setInterceptors(singletonList(new RestTemplateInterceptor()));
     }
 
 
@@ -90,6 +110,39 @@ public class RestTemplateConfig {
         TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
         return SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
 
+    }
+
+
+    public MappingJackson2HttpMessageConverter mappingJacksonHttpMessageConverter() {
+        final MappingJackson2HttpMessageConverter jaksonMessageConverter = new MappingJackson2HttpMessageConverter();
+        jaksonMessageConverter.setObjectMapper(objectMapper());
+        return jaksonMessageConverter;
+    }
+
+
+    @Bean
+    public ObjectMapper objectMapper() {
+
+        final ObjectMapper objectMapper = new ObjectMapper();
+
+        // print timestamps as readable string in ISO format
+        //objectMapper.registerModule(new JavaTimeModule());
+        //objectMapper.registerModule(new Jdk8Module());
+
+        //alternatively , this will finds and registers available modules
+        objectMapper.findAndRegisterModules();
+
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.enable(SerializationFeature.WRITE_DATES_WITH_ZONE_ID);
+
+        //pretty printing
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+
+        return objectMapper;
     }
 
 

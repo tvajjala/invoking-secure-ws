@@ -10,4 +10,9 @@ spring:
 logging:
   level:
     # Enabling trace for app specific logging.
+    com.tvajjala: DEBUG
     org.springframework: INFO
+
+store:
+  base:
+    url: https://petstore.swagger.io/v2/
